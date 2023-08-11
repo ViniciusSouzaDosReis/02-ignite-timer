@@ -25,6 +25,11 @@ interface CyclesContextType {
   interruptCurrentCycle: () => void
 }
 
+interface CycleState {
+  cycles: Cycle[]
+  currentCycleId: string | null
+}
+
 export const CyclesContext = createContext({} as CyclesContextType)
 
 interface CyclesContextProviderProps {
@@ -34,18 +39,38 @@ interface CyclesContextProviderProps {
 export function CyclesContextProvider({
   children,
 }: CyclesContextProviderProps) {
-  // const [cycles, setCycles] = useState<Cycle[]>([])
-  const [cycles, dispatch] = useReducer((state: Cycle[], action: any) => {
-    switch (action.type) {
-      case 'ADD_NEW_CYCLE':
-        return [...state, action.payload.newCycle]
-    }
-
-    return state
-  }, [])
-  const [currentCycleId, setCurrentCycleId] = useState<string | null>(null)
+  const [cyclesState, dispatch] = useReducer(
+    (state: CycleState, action: any) => {
+      switch (action.type) {
+        case 'ADD_NEW_CYCLE':
+          return {
+            ...state,
+            cycles: [...state.cycles, action.payload.newCycle],
+            currentCycleId: action.payload.newCycle.id,
+          }
+        case 'INTERRUPT_CURRENT_CYCLE':
+          return {
+            ...state,
+            cycles: state.cycles.map((cycle) => {
+              if (cycle.id === state.currentCycleId) {
+                return { ...cycle, interruptedDate: new Date() }
+              } else {
+                return cycle
+              }
+            }),
+            currentCycleId: null,
+          }
+      }
+      return state
+    },
+    {
+      cycles: [],
+      currentCycleId: null,
+    },
+  )
   const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
 
+  const { cycles, currentCycleId } = cyclesState
   const currentCycle = cycles.find((cycle) => cycle.id === currentCycleId)
 
   function setSecondsPassed(seconds: number) {
@@ -80,17 +105,13 @@ export function CyclesContextProvider({
       startDate: new Date(),
     }
 
-    // setCycles((state) => [...state, newCycle])
     dispatch({
       type: 'ADD_NEW_CYCLE',
       payload: {
         newCycle,
       },
     })
-    setCurrentCycleId(id)
     setAmountSecondsPassed(0)
-
-    // reset()
   }
 
   function interruptCurrentCycle() {
@@ -109,7 +130,6 @@ export function CyclesContextProvider({
         currentCycleId,
       },
     })
-    setCurrentCycleId(null)
   }
 
   return (

@@ -60,8 +60,21 @@ export function CyclesContextProvider({
             }),
             currentCycleId: null,
           }
+        case 'MARK_CURRENT_CYCLE_AS_FINISHED':
+          return {
+            ...state,
+            cycles: state.cycles.map((cycle) => {
+              if (cycle.id === state.currentCycleId) {
+                return { ...cycle, finishedDate: new Date() }
+              } else {
+                return cycle
+              }
+            }),
+            currentCycleId: null,
+          }
+        default:
+          return state
       }
-      return state
     },
     {
       cycles: [],
@@ -84,15 +97,6 @@ export function CyclesContextProvider({
         currentCycleId,
       },
     })
-    // setCycles((state) =>
-    //   state.map((cycle) => {
-    //     if (cycle.id === currentCycleId) {
-    //       return { ...cycle, finishedDate: new Date() }
-    //     } else {
-    //       return cycle
-    //     }
-    //   }),
-    // )
   }
 
   function createNewCycle(data: CreateCycleData) {
@@ -115,15 +119,6 @@ export function CyclesContextProvider({
   }
 
   function interruptCurrentCycle() {
-    // setCycles((state) =>
-    //   state.map((cycle) => {
-    //     if (cycle.id === currentCycleId) {
-    //       return { ...cycle, interruptedDate: new Date() }
-    //     } else {
-    //       return cycle
-    //     }
-    //   }),
-    // )
     dispatch({
       type: 'INTERRUPT_CURRENT_CYCLE',
       payload: {
